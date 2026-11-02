@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sınıf Savaşları</title>
+<meta name="theme-color" content="#0e1517">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@600;800&family=Barlow+Semi+Condensed:wght@400;500;700&display=swap">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --bg:#0e1517; --table:#132022; --table2:#182a2c; --ink:#e9efe8; --muted:#8ea19b;
+  --line:#28403f; --brass:#e6c06a; --good:#4ade80; --bad:#f87171; --back:#1d2f4a;
+  --display:"Grenze", Georgia, serif; --body:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+h1{font-family:var(--display);font-weight:800;font-size:28px;margin:0;letter-spacing:.5px;color:var(--brass)}
+h2{font-family:var(--display);font-weight:600;font-size:20px;margin:0}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sub{color:var(--muted);font-size:13px}
+.panel{background:var(--table);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.center{justify-content:center;text-align:center}
+input{font-family:var(--body);font-size:16px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:120px}
+.bigcode{font-family:var(--display);font-weight:800;font-size:46px;letter-spacing:.2em;color:var(--brass);text-align:center;user-select:all}
+.linkbox{font-size:13px;word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;user-select:all}
+.note{font-size:13px;color:var(--muted);line-height:1.45}
+.warn{font-size:13px;color:var(--bad);line-height:1.45}
+.table{background:radial-gradient(120% 80% at 50% 50%,var(--table2),var(--table));border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:10px}
+.hero{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.18);position:relative}
+.hero .nm{font-family:var(--display);font-size:19px;font-weight:600;white-space:nowrap}
+.hero .meta{display:flex;gap:12px;color:var(--muted);font-size:13px;align-items:center;font-variant-numeric:tabular-nums}
+.hero .hp{font-family:var(--display);font-size:22px;color:var(--ink)}
+.hero .hp::before{content:"♥ ";color:var(--bad);font-size:16px}
+.hero.target{outline:2px solid var(--brass);cursor:pointer;animation:pulse 1s infinite}
+.hero.active{border-color:var(--brass)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-left:6px;vertical-align:middle}
+.dot.off{background:var(--bad)}
+.backs{display:flex;gap:3px}
+.backs i{width:12px;height:17px;border-radius:2px;background:var(--back);border:1px solid #3b5a86}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{aspect-ratio:5/7;border:1px dashed var(--line);border-radius:10px;position:relative;min-width:0}
+.mid{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.turn{font-family:var(--display);font-size:16px;color:var(--brass)}
+button{font-family:var(--body);font-weight:700;font-size:15px;border-radius:8px;border:1px solid var(--brass);background:var(--brass);color:#1b1608;padding:8px 16px;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.ghost{background:transparent;color:var(--brass)}
+button.small{padding:5px 10px;font-size:13px}
+button:focus-visible,.card:focus-visible,input:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.hint{min-height:20px;font-size:13px;color:var(--muted);text-align:center}
+.hint b.g{color:var(--good)} .hint b.r{color:var(--bad)}
+.handlbl{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hand{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
+.hand > div{flex:0 0 92px;aspect-ratio:5/7}
+.card{--rc:#999;width:100%;height:100%;border-radius:10px;border:2px solid var(--rc);background:linear-gradient(170deg,#1c2a2c,#0f1819);
+  display:flex;flex-direction:column;padding:5px;gap:3px;position:relative;user-select:none;transition:transform .15s, box-shadow .15s;box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 0 14px -6px var(--rc)}
+.card .rar{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--rc);font-weight:700;text-align:center;line-height:1}
+.card .art{flex:1;border-radius:6px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,var(--fc),transparent 75%);border:1px solid rgba(255,255,255,.06);min-height:0}
+.card .art span{font-family:var(--display);font-weight:800;font-size:clamp(20px,6vw,30px);color:rgba(255,255,255,.9);text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.card .nm{font-size:12px;font-weight:700;text-align:center;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .st{display:flex;justify-content:space-between;font-family:var(--display);font-size:17px;line-height:1;font-variant-numeric:tabular-nums}
+.card .st .a::before{content:"⚔";font-size:12px;margin-right:2px;color:var(--brass)}
+.card .st .h::before{content:"♥";font-size:12px;margin-right:2px;color:var(--bad)}
+.card .st .h.hurt{color:var(--bad)}
+.f0{--fc:#2f6b55} .f1{--fc:#7a5a2c} .f2{--fc:#4b3f7a}
+.card.can{cursor:pointer;box-shadow:0 0 0 2px var(--brass),0 0 18px -4px var(--brass)}
+.card.sleep{opacity:.82}
+.card.sel{transform:translateY(-6px) scale(1.04)}
+.card.playable{cursor:pointer}
+.card.playable:hover{transform:translateY(-4px)}
+.card.strong{outline:3px solid var(--good);cursor:pointer}
+.card.weak{outline:3px solid var(--bad);cursor:pointer}
+.card.neutral{outline:3px solid var(--muted);cursor:pointer}
+.tag{position:absolute;top:-9px;right:-6px;font-size:11px;font-weight:700;padding:1px 5px;border-radius:6px;z-index:2}
+.tag.g{background:var(--good);color:#07210f} .tag.r{background:var(--bad);color:#2a0606}
+.shake{animation:shake .35s}
+.fx{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;font-size:28px;color:#fff;text-shadow:0 0 6px #000,0 2px 0 #000;pointer-events:none;z-index:5;animation:float 1s forwards;white-space:nowrap}
+.fx.big{color:var(--good)} .fx.small{color:#9ec5ff} .fx.ko{color:var(--bad);font-size:18px}
+.log{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:2px;min-height:54px}
+.log div:first-child{color:var(--ink)}
+details{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--table)}
+summary{cursor:pointer;font-weight:700}
+.rules{font-size:13px;color:var(--muted);line-height:1.45}
+.rules p{margin:8px 0}
+.ring{display:grid;grid-template-columns:1fr;gap:4px;margin-top:6px}
+.ring div{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:4px 0;border-top:1px solid var(--line)}
+.ring b{color:var(--ink)}
+.ring .g{color:var(--good)} .ring .r{color:var(--bad)}
+.over{position:fixed;inset:0;background:rgba(5,10,11,.82);display:grid;place-items:center;z-index:20;padding:20px}
+.over .box{background:var(--table);border:1px solid var(--brass);border-radius:14px;padding:24px;text-align:center;display:flex;flex-direction:column;gap:12px;max-width:320px}
+.over h2{font-size:34px;color:var(--brass)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-weight:700;z-index:30;max-width:calc(100% - 32px);text-align:center}
+[hidden]{display:none!important}
+@keyframes pulse{50%{outline-color:transparent}}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes float{0%{opacity:0;margin-top:0}20%{opacity:1}100%{opacity:0;margin-top:-34px}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Sınıf Savaşları</h1><span class="sub" id="modeLbl">Lobi</span></div>
+  <div id="app"></div>
+  <details>
+    <summary>Kurallar ve sınıf üstünlükleri</summary>
+    <div class="rules">
+      <p>Her turun başında 1 kart çekersin. Turda <b>1 kart</b> sahaya koyabilirsin (sahada en fazla 3 kart). Sahaya yeni çıkan kart o tur saldıramaz.</p>
+      <p>Saldırmak için kendi kartına, sonra rakip karta dokun. İki kart birbirine vurur. Güçlü olduğun sınıfa <b>×2</b>, zayıf olduğun sınıfa <b>×½</b> hasar verirsin.</p>
+      <p>Rakibin sahasında kart varken rakibe doğrudan saldıramazsın. Rakibin canını 0'a indiren kazanır.</p>
+      <p>Üstünlük zinciri: 24 sınıf bir çember halinde dizili. Her sınıf kendinden sonraki 2 sınıfa güçlü, kendinden önceki 2 sınıfa zayıf.</p>
+      <div class="ring" id="ring"></div>
+    </div>
+  </details>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ---------- Veri ---------- */
+const RING=[['Su Yaratığı','Aquatic',0],['Ejder','Draco',0],['Bitki Yaratığı','Plantborn',0],['Golem','Golem',2],['Savaşçı','Warrior',1],['Suikastçı','Assassin',1],['Büyücü','Mage',1],['Hayalet','Phantom',2],['Avcı','Hunter',1],['Uçan Yaratık','Volator',0],['Böcek','Insect',0],['Siber','Cyber',2],['Dev','Giant',2],['Kara Yaratığı','Createrra',0],['Peri','Fairy',2],['İblis','Demon',2],['Dövüşçü','Fighter',1],['Canavarsoy','Beastkin',2],['Mistik','Mystic',1],['Ölümsüz','Undead',2],['Kadim','Elder',2],['Şaman','Shaman',1],['Ruh','Spirit',2],['Göksel','Celestial',2]];
+const N=RING.length;
+const RAR=[
+ {tr:'Yaygın',c:'#9aa3a8',atk:[2,3],hp:[3,4],w:34},
+ {tr:'Sıradışı',c:'#3fd56b',atk:[3,4],hp:[4,5],w:26},
+ {tr:'Nadir',c:'#3b8cff',atk:[4,5],hp:[5,6],w:18},
+ {tr:'Epik',c:'#a960f5',atk:[5,6],hp:[6,7],w:12},
+ {tr:'Efsanevi',c:'#ff8c2a',atk:[6,7],hp:[7,9],w:7},
+ {tr:'Mitik',c:'#f04747',atk:[8,8],hp:[9,10],w:3}];
+const HERO_HP=25, DECK=16, SLOTS=3;
+
+/* ---------- Oyun motoru ---------- */
+function rel(a,b){const d=(b-a+N)%N;if(d===1||d===2)return 1;if(d===N-1||d===N-2)return -1;return 0}
+function dmg(atk,r){return r===1?atk*2:r===-1?Math.ceil(atk/2):atk}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const nm=c=>RING[c.cls][0];
+function pickRar(){let t=RAR.reduce((s,r)=>s+r.w,0),x=Math.random()*t;for(let i=0;i<RAR.length;i++){x-=RAR[i].w;if(x<0)return i}return 0}
+function makeCard(cls,rar){const R=RAR[rar];const hp=rnd(...R.hp);return{cls,rar,atk:rnd(...R.atk),hp,max:hp,can:false}}
+function newG(start,round=0){
+  const rars=Array.from({length:DECK},pickRar);
+  const mk=()=>rars.map(r=>makeCard(rnd(0,N-1),r)).sort(()=>Math.random()-.5);
+  const P=d=>({hp:HERO_HP,deck:d,hand:[],board:Array(SLOTS).fill(null)});
+  const g={p:[P(mk()),P(mk())],turn:start,played:false,winner:null,log:[],ev:null,evn:0,round};
+  for(let i=0;i<4;i++){draw(g,0);draw(g,1)}
+  begin(g,start);g.log=[`Oyun başladı. İlk tur: @${start}.`];return g}
+function draw(g,i){const P=g.p[i];if(P.deck.length&&P.hand.length<7)P.hand.push(P.deck.pop())}
+function begin(g,i){g.turn=i;g.played=false;draw(g,i);g.p[i].board.forEach(c=>c&&(c.can=true))}
+function lg(g,t){g.log.unshift(t);g.log=g.log.slice(0,4)}
+function playCard(g,h){const i=g.turn,P=g.p[i];if(g.played)return false;const s=P.board.indexOf(null);if(s<0||!P.hand[h])return false;
+  const c=P.hand.splice(h,1)[0];c.can=false;P.board[s]=c;g.played=true;lg(g,`@${i}: ${nm(c)} (${RAR[c.rar].tr}) sahaya çıktı.`);return true}
+function attackAct(g,as,ds){const ai=g.turn,di=1-ai;const A=g.p[ai].board[as];if(!A||!A.can)return false;
+  const foes=g.p[di].board.some(c=>c);if(ds==='hero'&&foes)return false;
+  A.can=false;const fx=[];
+  if(ds==='hero'){g.p[di].hp-=A.atk;lg(g,`@${ai} → @${di}: ${nm(A)} doğrudan ${A.atk} hasar verdi.`);fx.push([`h${di}`,'-'+A.atk,''])}
+  else{const D=g.p[di].board[ds];if(!D)return false;const r1=rel(A.cls,D.cls),r2=rel(D.cls,A.cls);const d1=dmg(A.atk,r1),d2=dmg(D.atk,r2);
+    D.hp-=d1;A.hp-=d2;
+    lg(g,`${nm(A)} → ${nm(D)}: ${d1} hasar${r1===1?' (×2 güçlü!)':r1===-1?' (×½ zayıf)':''}, karşılık ${d2}.`);
+    fx.push([`b${di}-${ds}`,'-'+d1,r1===1?'big':r1===-1?'small':''],[`b${ai}-${as}`,'-'+d2,r2===1?'big':r2===-1?'small':'']);
+    if(D.hp<=0){g.p[di].board[ds]=null;fx.push([`b${di}-${ds}`,'yok edildi','ko'])}
+    if(A.hp<=0){g.p[ai].board[as]=null;fx.push([`b${ai}-${as}`,'yok edildi','ko'])}}
+  g.ev={n:++g.evn,fx};checkOver(g);return true}
+function endTurn(g){if(g.winner!=null)return;begin(g,1-g.turn)}
+function checkOver(g){const dead=i=>g.p[i].hp<=0||(!g.p[i].deck.length&&!g.p[i].hand.length&&g.p[i].board.every(c=>!c));
+  if(dead(1))g.winner=0;else if(dead(0))g.winner=1}
+
+/* ---------- Bilgisayar ---------- */
+function cardVal(c){return c.atk+c.hp+c.rar*2}
+async function aiTurn(){busy=true;draw_();await sleep(700);const g=V.g,P=g.p[1],E=g.p[0];
+  if(g.winner==null&&P.board.includes(null)&&P.hand.length){let best=0,bs=-1e9;
+    P.hand.forEach((c,h)=>{let s=cardVal(c);E.board.forEach(e=>{if(e)s+=rel(c.cls,e.cls)*4});if(s>bs){bs=s;best=h}});
+    playCard(g,best);draw_();await sleep(700)}
+  for(let s=0;s<SLOTS&&g.winner==null;s++){const A=P.board[s];if(!A||!A.can)continue;
+    const foes=E.board.map((e,i)=>e?i:-1).filter(i=>i>=0);
+    if(!foes.length){attackAct(g,s,'hero');draw_();await sleep(800);continue}
+    let bt=-1,bsc=-1e9;foes.forEach(i=>{const D=E.board[i];const d1=dmg(A.atk,rel(A.cls,D.cls)),d2=dmg(D.atk,rel(D.cls,A.cls));
+      const sc=(d1>=D.hp?cardVal(D)+5:d1*.6)-(d2>=A.hp?cardVal(A):d2*.4);if(sc>bsc){bsc=sc;bt=i}});
+    if(bsc>-4){attackAct(g,s,bt);draw_();await sleep(800)}}
+  busy=false;if(g.winner==null){await sleep(300);endTurn(g)}draw_()}
+
+/* ---------- Uygulama durumu ---------- */
+const PREFIX='sinif-savaslari-v1-';
+let screen='lobby';          // lobby | wait | connecting | game
+let V=null;                  // {mode:'pc'|'online', g, me}
+let sel=null,busy=false,seenEv=0;
+let peer=null,conn=null,role=null,code=null,connected=false,joinTries=0;
+const app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3500)}
+const shareLink=()=>location.origin+location.pathname+'?oda='+code;
+function store(){try{if(V&&V.mode==='online')localStorage.setItem('ss-game',JSON.stringify({code,role,g:V.g,at:Date.now()}))}catch(e){}}
+function stored(){try{const s=JSON.parse(localStorage.getItem('ss-game')||'null');if(s&&Date.now()-s.at<12*3600e3)return s}catch(e){}return null}
+function clearStored(){try{localStorage.removeItem('ss-game')}catch(e){}}
+
+/* ---------- Çizim ---------- */
+function draw_(){
+  document.getElementById('modeLbl').textContent=V&&V.mode==='pc'?'Bilgisayara karşı':code?'Oda '+code:'Lobi';
+  if(screen==='lobby')return renderLobby();
+  if(screen==='wait')return renderWait();
+  if(screen==='connecting')return app.innerHTML=`<div class="panel center"><h2>Odaya bağlanılıyor…</h2><div class="bigcode">${esc(code)}</div><div class="row center"><button class="ghost" data-act="lobby">Vazgeç</button></div></div>`;
+  return renderGame()}
+
+function renderLobby(){const s=stored();const hasPeer=typeof Peer!=='undefined';
+  app.innerHTML=`
+  ${s&&s.g&&s.g.winner==null?`<div class="panel"><h2>Yarım kalan oyun</h2><span class="note">Oda ${esc(s.code)} · ${s.role==='host'?'sen kurdun':'katıldın'}</span><div class="row"><button data-act="resume">Kaldığın yerden devam et</button><button class="ghost small" data-act="forget">Sil</button></div></div>`:''}
+  <div class="panel"><h2>Arkadaşınla oyna</h2>
+    <span class="note">Oda kur, çıkan linki arkadaşına gönder. Linke tıklayınca doğrudan odana girer, hesap gerekmez.</span>
+    ${hasPeer?'':'<span class="warn">Bağlantı kütüphanesi yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.</span>'}
+    <div class="row"><button data-act="host" ${hasPeer?'':'disabled'}>Oda kur</button><input id="codeIn" maxlength="5" placeholder="KOD" aria-label="Oda kodu"><button class="ghost" data-act="joincode" ${hasPeer?'':'disabled'}>Kodla katıl</button></div></div>
+  <div class="panel"><h2>Tek başına</h2><div class="row"><button class="ghost" data-act="pc">Bilgisayara karşı oyna</button></div></div>`}
+
+function renderWait(){const link=shareLink();
+  app.innerHTML=`<div class="panel center"><h2>Odan hazır</h2><div class="bigcode">${esc(code)}</div>
+   <span class="note">Bu linki arkadaşına gönder. Açtığı an oyun ikinizde de başlar. Bu sayfayı kapatma.</span>
+   <div class="linkbox" id="linkbox">${esc(link)}</div>
+   <div class="row center"><button data-act="share">Linki paylaş</button><button class="ghost" data-act="copy">Kopyala</button><a class="ghost" style="text-decoration:none" href="https://wa.me/?text=${encodeURIComponent('Sınıf Savaşları oynayalım mı? '+link)}" target="_blank" rel="noopener"><button class="ghost" tabindex="-1">WhatsApp</button></a></div>
+   <div class="row center"><button class="ghost small" data-act="lobby">Odayı kapat</button></div></div>`}
+
+function cardHTML(c,extra=''){const R=RAR[c.rar],C=RING[c.cls];
+  return `<div class="card f${C[2]} ${extra}" style="--rc:${R.c}" tabindex="0">
+   <div class="rar">${R.tr}</div><div class="art"><span>${C[1].slice(0,2).toUpperCase()}</span></div>
+   <div class="nm" title="${C[0]} / ${C[1]}">${C[0]}</div>
+   <div class="st"><span class="a">${c.atk}</span><span class="h ${c.hp<c.max?'hurt':''}">${Math.max(c.hp,0)}</span></div></div>`}
+function who(i){if(V.mode==='pc')return i===0?'Sen':'Bilgisayar';return i===V.me?'Sen':'Rakip'}
+
+function renderGame(){const g=V.g;const me=V.me,op=1-me,M=g.p[me],O=g.p[op];const online=V.mode==='online';
+  const my=g.turn===me&&!busy&&g.winner==null&&(!online||connected);
+  const selC=sel!=null?M.board[sel]:null;const oppEmpty=O.board.every(c=>!c);
+  const slot=(pi,s)=>{const c=g.p[pi].board[s];const key=`b${pi}-${s}`;if(!c)return`<div class="slot" data-key="${key}"></div>`;let cls='',tag='';
+    if(pi===me){if(my&&c.can)cls='can';if(!c.can)cls+=' sleep';if(sel===s)cls+=' sel'}
+    else if(selC&&my){const r=rel(selC.cls,c.cls);cls=r===1?'strong':r===-1?'weak':'neutral';tag=r===1?'<span class="tag g">×2</span>':r===-1?'<span class="tag r">×½</span>':''}
+    return`<div class="slot" data-key="${key}" data-act="${pi===me?'mine':'foe'}" data-s="${s}">${tag}${cardHTML(c,cls)}</div>`};
+  let hint='';if(g.winner!=null)hint='';else if(online&&!connected)hint='<b class="r">Rakibin bağlantısı koptu.</b> Geri gelmesini bekle.';
+  else if(g.turn!==me)hint=`${who(op)} oynuyor…`;
+  else if(selC)hint=oppEmpty?'Rakibin sahası boş: rakibe doğrudan saldır.':'Hedef seç. <b class="g">Yeşil ×2</b> · <b class="r">Kırmızı ×½</b>';
+  else if(!g.played&&M.hand.length&&M.board.includes(null))hint='Elinden bir kart seç ve sahaya koy.';
+  else if(M.board.some(c=>c&&c.can))hint='Saldırmak için parlayan kartına dokun.';else hint='Hamlen bitti, turu bitir.';
+  const logs=g.log.map(l=>esc(l.replace(/@(\d)/g,(_,i)=>who(+i))));const won=g.winner===me;
+  app.innerHTML=`<div class="table">
+   <div class="hero ${selC&&oppEmpty&&my?'target':''} ${g.turn===op?'active':''}" data-act="hero" data-key="h${op}"><span class="nm">${who(op)}${online?`<span class="dot ${connected?'':'off'}" title="${connected?'Bağlı':'Bağlantı yok'}"></span>`:''}</span>
+     <span class="meta"><span class="backs">${'<i></i>'.repeat(O.hand.length)}</span><span>Deste ${O.deck.length}</span><span class="hp">${Math.max(O.hp,0)}</span></span></div>
+   <div class="board">${[0,1,2].map(s=>slot(op,s)).join('')}</div>
+   <div class="mid"><span class="turn">${g.winner!=null?'Oyun bitti':g.turn===me?'Senin turun':'Rakibin turu'}</span>
+     <span class="row"><button class="ghost small" data-act="lobby">Çık</button><button data-act="end" ${my?'':'disabled'}>Turu bitir</button></span></div>
+   <div class="board">${[0,1,2].map(s=>slot(me,s)).join('')}</div>
+   <div class="hero ${g.turn===me?'active':''}" data-key="h${me}"><span class="nm">Sen</span><span class="meta"><span>Deste ${M.deck.length}</span><span class="hp">${Math.max(M.hp,0)}</span></span></div>
+   <div class="hint">${hint}</div>
+   <div class="handlbl">Elin (${M.hand.length})</div>
+   <div class="hand">${M.hand.map((c,h)=>`<div data-act="hand" data-h="${h}">${cardHTML(c,my&&!g.played&&M.board.includes(null)?'playable':'')}</div>`).join('')||'<span class="sub">Elinde kart yok.</span>'}</div>
+  </div>
+  <div class="log">${logs.map(l=>`<div>${l}</div>`).join('')}</div>
+  ${g.winner!=null?`<div class="over"><div class="box"><h2>${won?'Kazandın!':'Kaybettin'}</h2><span class="sub">${won?`${who(op)} yenildi.`:`${who(op)} bu eli aldı.`}</span>
+    <button data-act="again" ${online&&!connected?'disabled':''}>${online?'Rövanş':'Yeniden oyna'}</button><button class="ghost" data-act="lobby">Lobiye dön</button></div></div>`:''}`;
+  if(g.ev&&g.ev.n>seenEv){seenEv=g.ev.n;g.ev.fx.forEach(([k,t,c])=>fx(k,t,c))}}
+function fx(key,txt,k){const el=app.querySelector(`[data-key="${key}"]`);if(!el)return;el.classList.add('shake');
+  const s=document.createElement('span');s.className='fx '+k;s.textContent=txt;el.appendChild(s);setTimeout(()=>s.remove(),1050)}
+
+/* ---------- Ağ (PeerJS, cihazdan cihaza) ---------- */
+const codeOk=c=>/^[A-Z0-9]{5}$/.test(c);
+function genCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:5},()=>a[rnd(0,a.length-1)]).join('')}
+function teardown(){try{conn&&conn.close()}catch(e){}try{peer&&peer.destroy()}catch(e){}peer=null;conn=null;connected=false;role=null}
+function setUrl(c){try{history.replaceState(null,'',location.pathname+(c?'?oda='+c:''))}catch(e){}}
+function send(m){if(conn&&conn.open){try{conn.send(m)}catch(e){}}}
+function sendState(){send({t:'state',g:V.g})}
+
+function hostRoom(existingCode,existingG,tries=0){teardown();role='host';code=existingCode||genCode();setUrl(code);
+  if(existingG){V={mode:'online',g:existingG,me:0};seenEv=existingG.ev?.n||0;screen='game'}else{V=null;screen='wait'}
+  draw_();
+  peer=new Peer(PREFIX+code);
+  peer.on('connection',c=>{
+    if(conn&&conn.open&&connected){c.on('open',()=>{try{c.send({t:'full'})}catch(e){}setTimeout(()=>c.close(),400)});return}
+    attach(c)});
+  peer.on('disconnected',()=>{try{peer.reconnect()}catch(e){}});
+  peer.on('error',e=>{
+    if(e.type==='unavailable-id'){
+      if(existingCode&&tries<6){toast('Oda yeniden açılıyor…');setTimeout(()=>hostRoom(existingCode,existingG,tries+1),3000)}
+      else if(!existingCode){hostRoom(null,null)}
+      else{toast('Oda yeniden açılamadı. Yeni oda kur.');goLobby()}}
+    else if(e.type==='network'||e.type==='server-error'||e.type==='socket-error')toast('Sunucuya bağlanılamadı, internetini kontrol et.');
+  })}
+
+function joinRoom(c,tries=0){teardown();role='guest';code=c;setUrl(code);screen=V&&V.mode==='online'?'game':'connecting';draw_();
+  peer=new Peer();
+  peer.on('open',()=>{attach(peer.connect(PREFIX+code,{reliable:true}))});
+  peer.on('disconnected',()=>{try{peer.reconnect()}catch(e){}});
+  peer.on('error',e=>{
+    if(e.type==='peer-unavailable'){
+      if(tries<4){setTimeout(()=>{if(role==='guest'&&code===c)joinRoom(c,tries+1)},2500)}
+      else{toast('Oda bulunamadı. Kodu kontrol et ya da arkadaşından yeni link iste.');goLobby()}}
+    else if(e.type==='network'||e.type==='server-error'||e.type==='socket-error')toast('Sunucuya bağlanılamadı, internetini kontrol et.');
+  })}
+
+function attach(c){conn=c;
+  c.on('open',()=>{connected=true;
+    if(role==='host'){if(!V||!V.g){V={mode:'online',g:newG(0,0),me:0};seenEv=0}screen='game';sendState();store();draw_();toast('Rakibin bağlandı!')}
+    else send({t:'hello'})});
+  c.on('data',onData);
+  c.on('close',()=>{if(conn!==c)return;connected=false;conn=null;
+    if(screen==='game'){toast('Rakibin bağlantısı koptu.');draw_();
+      if(role==='guest')setTimeout(()=>{if(role==='guest'&&!connected&&code)joinRoom(code)},2500)}})
+  c.on('error',()=>{});
+}
+function onData(m){if(!m||typeof m!=='object')return;
+  if(m.t==='full'){toast('Bu odada zaten iki kişi oynuyor.');goLobby();return}
+  if(m.t==='hello'&&role==='host'){if(V&&V.g)sendState();return}
+  if(m.t==='state'&&m.g&&Array.isArray(m.g.p)){
+    const me=role==='host'?0:1;const first=!V||V.mode!=='online';
+    if(first||(m.g.round!==V.g.round))seenEv=first?(m.g.ev?.n||0):seenEv;
+    if(V&&V.g&&m.g.round!==V.g.round)seenEv=m.g.ev?.n||0;
+    V={mode:'online',g:m.g,me};connected=true;sel=null;screen='game';store();draw_()}}
+
+function goLobby(){teardown();code=null;V=null;sel=null;busy=false;screen='lobby';setUrl(null);draw_()}
+
+/* ---------- Olaylar ---------- */
+function act(fn){const g=V.g;if(fn(g)===false)return;sel=null;
+  if(V.mode==='online'){sendState();store()}draw_();
+  if(V.mode==='pc'&&g.turn===1&&g.winner==null&&!busy)aiTurn()}
+async function shareIt(){const link=shareLink();
+  if(navigator.share){try{await navigator.share({title:'Sınıf Savaşları',text:'Sınıf Savaşları oynayalım mı?',url:link});return}catch(e){if(e&&e.name==='AbortError')return}}
+  copyIt()}
+function copyIt(){const link=shareLink();(navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).then(()=>toast('Link kopyalandı.'),()=>{
+  const r=document.createRange();const el=document.getElementById('linkbox');if(el){r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast('Linki seçtim, kopyala.')})}
+
+app.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
+  if(a==='lobby'){if(V&&V.mode==='online'&&V.g&&V.g.winner!=null)clearStored();goLobby();return}
+  if(a==='pc'){teardown();code=null;setUrl(null);screen='game';busy=false;seenEv=0;V={mode:'pc',g:newG(0),me:0};draw_();return}
+  if(a==='host'){hostRoom(null,null);return}
+  if(a==='joincode'){const c=(document.getElementById('codeIn').value||'').trim().toUpperCase();if(!codeOk(c)){toast('Kod 5 karakter olmalı.');return}joinRoom(c);return}
+  if(a==='resume'){const s=stored();if(!s)return draw_();if(s.role==='host')hostRoom(s.code,s.g);else{V={mode:'online',g:s.g,me:1};seenEv=s.g.ev?.n||0;joinRoom(s.code)}return}
+  if(a==='forget'){clearStored();draw_();return}
+  if(a==='share'){shareIt();return}
+  if(a==='copy'){copyIt();return}
+  if(a==='again'){if(V.mode==='pc'){seenEv=0;V.g=newG(0);sel=null;draw_()}
+    else if(connected){const r=(V.g.round||0)+1;V.g=newG(r%2,r);seenEv=0;sel=null;sendState();store();draw_()}return}
+  if(!V||!V.g)return;const g=V.g;
+  if(g.turn!==V.me||busy||g.winner!=null)return;if(V.mode==='online'&&!connected)return;
+  if(a==='end'){act(g=>endTurn(g));return}
+  if(a==='hand'){act(g=>playCard(g,+t.dataset.h));return}
+  if(a==='mine'){const s=+t.dataset.s,c=g.p[V.me].board[s];if(c&&c.can){sel=sel===s?null:s;draw_()}return}
+  if(a==='foe'&&sel!=null){const s=sel;act(g=>attackAct(g,s,+t.dataset.s));return}
+  if(a==='hero'&&sel!=null){const s=sel;act(g=>attackAct(g,s,'hero'))}
+});
+app.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('card'))e.target.click()});
+
+document.getElementById('ring').innerHTML=RING.map((c,i)=>{const s=[1,2].map(d=>RING[(i+d)%N][0]).join(', '),w=[1,2].map(d=>RING[(i-d+N)%N][0]).join(', ');
+  return`<div><b>${c[0]}</b><span><span class="g">Güçlü:</span> ${s}<br><span class="r">Zayıf:</span> ${w}</span></div>`}).join('');
+
+/* ---------- Başlat ---------- */
+(function(){const q=new URLSearchParams(location.search).get('oda');const c=(q||'').toUpperCase();
+  if(codeOk(c)&&typeof Peer!=='undefined'){const s=stored();
+    if(s&&s.code===c&&s.role==='host'){hostRoom(c,s.g);return}
+    if(s&&s.code===c&&s.role==='guest'){V={mode:'online',g:s.g,me:1};seenEv=s.g.ev?.n||0}
+    joinRoom(c);return}
+  draw_()})();
+</script>
+</body>
+</html>
